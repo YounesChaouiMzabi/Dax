@@ -1,0 +1,93 @@
+#Ce fichier ne presente pas tout le code DAX utilisé dans le projet mais que des blocs de code 
+
+
+/*
+Savoir si Requete est traité dans le délai ou pas 
+
+delaiOrNot = 
+SWITCH (
+    TRUE (),
+    [Requete] = "Demande d'information" && ([Canal] = "Téléphone" || [Canal] = "Physique" || [Canal] = "Hotline") && [Duree] > 2, "Hors délai",
+    [Requete] = "Demande d'information" && ([Canal] = "Téléphone" || [Canal] = "Physique" || [Canal] = "Hotline") && [Duree] <= 2, "Dans le délai",
+    [Requete] = "Demande d'information" && ([Canal] = "CAN" || [Canal] = "Mobile" || [Canal] = "Web"|| [Canal] = "Chikaya"|| [Canal] = "Whatsapp" || [Canal] = "QrCode") &&[Duree] > 5, "Hors délai",
+    [Requete] = "Demande d'information" && ([Canal] = "CAN" || [Canal] = "Mobile" || [Canal] = "Web"|| [Canal] = "Chikaya"|| [Canal] = "Whatsapp"|| [Canal] = "QrCode") && [Duree] <= 5, "Dans le délai",
+    [Requete] = "Réclamation" && [Duree] > 20, "Hors délai",
+    [Requete] = "Réclamation" && [Duree] <= 20, "Dans le délai",
+    "N/A"
+)
+*/
+
+
+/*
+calcule de durée au bout de laquelle a été traité
+Durée = IF(ISBLANK([Date Engagement]), [DateCloture] - [Date Creation], [Date Notification] - [Date Creation])
+*/
+
+/*
+
+Savoir si le délai à respecter une condition de 5 jours ou pas 
+
+
+5jrs = 
+SWITCH (
+    TRUE (),
+    [Requete] = "Demande d'information"  && [Duree] > 5, "Hors délai",
+    [Requete] = "Demande d'information" && [Duree] <= 5, "Dans le délai",
+    "N/A"
+)
+
+*/
+
+
+/*
+
+Calcule de délai de traitement de chaque requete en fonction de canal ainsi que la durée precedement calculé
+delaiVF = 
+SWITCH (
+    TRUE (),
+    [Requete] = "Demande d'information" && ([Canal] = "Téléphone" || [Canal] = "Physique" || [Canal] = "Hotline") && [Duree] > 2, "Hors délai",
+    [Requete] = "Demande d'information" && ([Canal] = "Téléphone" || [Canal] = "Physique" || [Canal] = "Hotline") && [Duree] <= 2, "Dans le délai",
+    [Requete] = "Demande d'information" && ([Canal] = "CAN" || [Canal] = "Mobile" || [Canal] = "Web") &&[DiCanMobileWebDuree] > 5, "Hors délai",
+    [Requete] = "Demande d'information" && ([Canal] = "CAN" || [Canal] = "Mobile" || [Canal] = "Web") &&NOT(ISBLANK([DiCanMobileWebDuree])) && [DiCanMobileWebDuree] <= 5, "Dans le délai",                                                                      [Requete] = "Demande d'information" && ([Canal] = "Chikaya"|| [Canal] = "Whatsapp"|| [Canal] = "QrCode") &&[Duree] > 5, "Hors délai",
+    [Requete] = "Demande d'information" && ([Canal] = "Chikaya"|| [Canal] = "Whatsapp"|| [Canal] = "QrCode") && [Duree] <= 5, "Dans le délai",
+    "N/A"
+)
+*/
+
+/*
+
+calcule de la durée pour certaines Canals tq : CAN, Mobile, Web
+DiCanMobileWebDuree = IF(TableDI[Canal] = "CAN"||TableDI[Canal] = "Mobile"||TableDI[Canal] = "Web", TableDI[BusinessDays], BLANK())
+
+*/
+
+
+/*
+savoir quelle est l'etat de l'engagement pour une requetes traité
+EngagementPrime = 
+SWITCH (
+    TRUE (),
+    [Engagement] = "NON_HONORE" , "NON_HONORE",
+    [Engagement] = "EN_COURS" , "EN_COURS",
+    [Engagement] = "HONORE" && [Nbr Engagement]=1, "HONORE",
+    [Engagement] = "HONORE" && [Nbr Engagement]>1, "NON_HONORE",
+    ISBLANK('TableRéclamations'[DateCloture])&&ISBLANK('TableRéclamations'[Engagement]) , "EN_COURS",
+    "N/A"
+)
+*/
+
+/*
+Reclamation avec Engagement = IF(ISBLANK([Duree BO]) && ISBLANK([Engagement])&&NOT ISBLANK('TableRéclamations'[DateCloture]),"Cas 3",IF(ISBLANK('TableRéclamations'[Engagement]), "Sans Engagement" , "Avec Engagement")
+)
+*/
+/*
+Reclamation avec Engagement (10j) = IF([Reclamation avec Engagement] = "Avec Engagement",
+    IF(DATEDIFF('TableRéclamations'[Date Creation], 'TableRéclamations'[Date Notification], DAY) <= 10, "Dans le délai", "Hors délai")
+)
+*/
+
+/*
+Reclamation sans Engagement (20j) = IF([Reclamation avec Engagement] = "Sans Engagement",IF(ISBLANK([DateCloture]),"RSE non cloturé",IF([DateCloture] - [Date Creation] <= 20, "Dans le délai", "Hors délai"))
+)
+
+*/
